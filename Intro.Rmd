@@ -50,9 +50,10 @@ sums <- l18 %>%
   mutate(health_sys_any="Total") %>% 
   as.data.frame()
  
- 
+
  l18 %>%
    group_by(health_sys_any,acutehosp_flag) %>% 
+   apply_labels
    summarise(n=n()) %>% 
    spread(acutehosp_flag,n) %>%
    as.data.frame() %>%
