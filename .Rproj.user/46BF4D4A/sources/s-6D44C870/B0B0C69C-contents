@@ -1,0 +1,64 @@
+---
+output: html_document
+---
+
+```{r load-dependencies, echo=FALSE, comment=FALSE, warning=FALSE, message=FALSE}
+source("import-data.R")
+```
+
+
+## Comparative Health Systems Performance Initiative
+
+According to the Compendium of U.S. Health Systems Technical Documentation:
+
+>The Comparative Health System Performance (CHSP) Initiative was created by the Agency for Healthcare Research and Quality (AHRQ) in 2015 in order to study how health care systems promote evidence-based practices in delivering care.[^1]
+
+[^1]: For additional CHSP information: https://www.ahrq.gov/chsp/index.html
+
+The Compendium of U.S. Health Systems was created by the AHRQ as a part of the HCSP Initiative in order to provide master reference files to measure variables across the U.S. health systems.   The Compendium includes `r formatC(nrow(c18), big.mark=",")` health systems and `r formatC(nrow(l18), big.mark=",")` individual member hospitals.
+
+The Compendium is composed of two data sources:
+
+  1. IQVIA OneKey - (6,282 hospitals)
+  1. AHA Annual Survey Database - (7,480 hospitals)
+  
+Hospitals were then matched by name using the SAS COMPGED function, and by geography using address info.  Through matching based on name and geography, 1,020 hospitals were excluded.  An additional 74 were excluded due to being outside the 50 States or D.C.  leaving 6,742 matching across both sources.    Both manual and computerized processess were used to verify hospital and hospital system information.
+
+Hospitals left in the linkage file include:
+
+Linked to Compendium health systems Not linked to Compendium health systems
+Yes
+No
+
+
+```{r }
+nrow(filter(l18,acutehosp_flag==1) %>% 
+       filter(!is.na(health_sys_id))
+     )
+l18 <- l18 %>% 
+  mutate(health_sys_any=(if_else (is.na(health_sys_id),
+    "Not linked to Compendium health systems",
+    "Linked to Compendium health systems"
+    )
+  )
+  )
+
+sums <- l18 %>% 
+  group_by(acutehosp_flag) %>% 
+  summarise(n=n()) %>% 
+  spread(acutehosp_flag,n) %>% 
+  mutate(health_sys_any="Total") %>% 
+  as.data.frame()
+ 
+
+ l18 %>%
+   group_by(health_sys_any,acutehosp_flag) %>% 
+   apply_labels
+   summarise(n=n()) %>% 
+   spread(acutehosp_flag,n) %>%
+   as.data.frame() %>%
+   rbind(sums) %>% 
+   knitr::kable()  
+ 
+ 
+```
